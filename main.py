@@ -3,6 +3,7 @@ import time
 from discord.ext import commands
 from discord.ext import tasks
 import requests
+import mcstatus
 
 updateChannelID = 1565193431196635267
 
@@ -16,14 +17,16 @@ class ipUpdate(commands.Bot):
 
 bot = ipUpdate()
 
+def getIp():
+    return requests.get('https://api.ipify.org').text
+
 @tasks.loop(hours=1.0)
 async def hourlyUpdate():
-    public_ip = requests.get('https://api.ipify.org').text
-    print(f"update {public_ip}")
+    ip = getIp()
     channel = await bot.fetch_channel(updateChannelID)
     embed = discord.Embed(
         title="Hourly IP Update",
-        description=f"IP is currently {public_ip}",
+        description=f"IP is currently {ip}",
         color=discord.Color.green()
     )
     embed.set_footer(
@@ -35,6 +38,29 @@ async def hourlyUpdate():
 token = ""
 with open(".env", "r", encoding="utf-8") as file:
     token = file.read()
+
+@bot.tree.command(name="status", description="Get the status of the server")
+async def getServerInfo(intr: discord.Interaction):
+    replyEmbed = discord.Embed(
+        title = "Server Status",
+        description = "",
+        color = discord.Color.green()
+    )
+    server = mcstatus.JavaServer(getIp(), 25565)
+    try:
+        status = server.query()
+        replyEmbed.add_field(name="MOTD", value=status.motd)
+        replyEmbed.add_field(name="Online Count", value=f"{status.players.online}/{status.players.max}")
+        playerString = ""
+        for player in status.players.list:
+            playerString+=f"{player}\n"
+        replyEmbed.add_field(name="Players", value=playerString)
+    except Exception as e:
+        replyEmbed.description = "Server is probably offline"
+        replyEmbed.add_field(name="RESPONSE", value=e)
+        replyEmbed.color = discord.Color.red()
+        
+    await intr.response.send_message(embed=replyEmbed)
 
 @bot.event
 async def on_ready():
