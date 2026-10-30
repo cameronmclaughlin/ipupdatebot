@@ -15,6 +15,10 @@ class ipUpdate(commands.Bot):
 
         super().__init__(command_prefix="!", intents=intents, activity=status, status=discord.Status.online)
 
+    async def setup_hook(self):
+        await self.tree.sync()
+        print("Command tree synced")
+
 bot = ipUpdate()
 
 def getIp():
