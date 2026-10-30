@@ -54,16 +54,19 @@ async def getServerInfo(intr: discord.Interaction):
     server = mcstatus.JavaServer(getIp(), 25565)
     server.timeout = 1.5
     try:
-        status = server.query()
-        replyEmbed.add_field(name="MOTD", value=status.motd)
-        replyEmbed.add_field(name="Online Count", value=f"{status.players.online}/{status.players.max}")
+        status = server.status()
+        replyEmbed.add_field(name="IP", value=getIp(), inline=False)
+        replyEmbed.add_field(name="MOTD", value=status.motd.raw, inline=False)
+        replyEmbed.add_field(name="Latency", value=f"{int(status.latency)}ms", inline=False)
+        replyEmbed.add_field(name="Online Count", value=f"{status.players.online}/{status.players.max}", inline=False)
         playerString = ""
-        for player in status.players.list:
-            playerString+=f"{player}\n"
-        replyEmbed.add_field(name="Players", value=playerString)
+        if status.players.sample:
+            for player in status.players.sample:
+                playerString+=f"{player.name}\n"
+            replyEmbed.add_field(name="Players", value=playerString)
     except Exception as e:
         replyEmbed.description = "Server is probably offline"
-        replyEmbed.add_field(name="RESPONSE", value=e)
+        replyEmbed.add_field(name="RESPONSE", value=e, inline=False)
         replyEmbed.color = discord.Color.red()
 
     #await intr.response.send_message(embed=replyEmbed)

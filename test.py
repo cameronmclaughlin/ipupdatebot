@@ -1,14 +1,16 @@
 import mcstatus
 
-server = mcstatus.JavaServer("mc.mineberry.org", 25565)
+server = mcstatus.JavaServer("192.168.0.128", 25565)
 try:
-    status = server.query()
-    print(f"MOTD: {status.motd}")
+    status = server.status()
+    print(f"MOTD: {status.motd.raw}")
     print(f"Online Count: {status.players.online}/{status.players.max}")
+    print(f"Latency: {int(status.latency)}ms")
     playerString = ""
-    for player in status.players.list:
-        playerString+=f"{player}\n"
-    print(f"Players:\n{playerString}")
+    if status.players.sample:
+        for player in status.players.sample:
+            playerString+=f"\n{player.name}"
+    print(f"Players online:{playerString}")
 except Exception as e:
     print("Server is probably offline")
     print(f"RESPONSE: {e}")
