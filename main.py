@@ -5,7 +5,9 @@ from discord.ext import tasks
 import requests
 import mcstatus
 
+lastIp = ""
 updateChannelID = 1565193431196635267
+lastOnline = False
 
 class ipUpdate(commands.Bot):
     def __init__(self):
@@ -24,20 +26,42 @@ bot = ipUpdate()
 def getIp():
     return requests.get('https://api.ipify.org').text
 
-@tasks.loop(hours=1.0)
+@tasks.loop(minutes=1.0)
 async def hourlyUpdate():
     ip = getIp()
     channel = await bot.fetch_channel(updateChannelID)
-    embed = discord.Embed(
-        title="Hourly IP Update",
-        description=f"IP is currently {ip}",
-        color=discord.Color.green()
-    )
-    embed.set_footer(
-        text="Use this to connect to the server. This is subject to change"
-    )
-
-    await channel.send(embed=embed)
+    if (ip != lastIp):
+        embed = discord.Embed(
+            title="New IP detected",
+            description=f"IP is currently {ip}",
+            color=discord.Color.green()
+        )
+        embed.set_footer(
+            text="Use this to connect to the server. This is subject to change"
+        )
+        
+        lastIp = ip
+        await channel.send(embed=embed)
+    # now, check if the server is online or offline
+    online = False
+    server = mcstatus.JavaServer(lastIp, 25565)
+    try:
+        status = server.status()
+        online = True
+    except Exception as e:
+        online = False
+    if(online != lastOnline):
+        lastOnline = online
+        statusEmbed = discord.Embed(
+            title="Server has gone online",
+            description="",
+            color=discord.Color.green()
+        )
+        if (online == False):
+            statusEmbed.title = "Server has gone offline"
+            statusEmbed.color = discord.Color.red()
+        await channel.send(embed=statusEmbed)
+    
 
 token = ""
 with open(".env", "r", encoding="utf-8") as file:
