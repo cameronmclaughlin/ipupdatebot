@@ -45,13 +45,13 @@ with open(".env", "r", encoding="utf-8") as file:
 
 @bot.tree.command(name="status", description="Get the status of the server")
 async def getServerInfo(intr: discord.Interaction):
+    await intr.response.defer(thinking=True)
     replyEmbed = discord.Embed(
         title = "Server Status",
         description = "",
         color = discord.Color.green()
     )
-    #server = mcstatus.JavaServer(getIp(), 25565)
-    server = mcstatus.JavaServer("mc.mineberry.org", 25565)
+    server = mcstatus.JavaServer(getIp(), 25565)
     server.timeout = 1.5
     try:
         status = server.query()
@@ -66,7 +66,8 @@ async def getServerInfo(intr: discord.Interaction):
         replyEmbed.add_field(name="RESPONSE", value=e)
         replyEmbed.color = discord.Color.red()
 
-    await intr.response.send_message(embed=replyEmbed)
+    #await intr.response.send_message(embed=replyEmbed)
+    await intr.followup.send(embed=replyEmbed)
 
 @bot.event
 async def on_ready():
