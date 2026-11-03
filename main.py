@@ -28,6 +28,8 @@ def getIp():
 
 @tasks.loop(minutes=1.0)
 async def hourlyUpdate():
+    global lastIp
+    global lastOnline
     ip = getIp()
     channel = await bot.fetch_channel(updateChannelID)
     if (ip != lastIp):
